@@ -1,12 +1,13 @@
-# Tropo Emulator for JS script
+# Tropo Emulator for Javascript
 
-The emulator helps you check your script will execute successfully on the Tropo Javascript runtime.
+The emulator helps you check your JS scripts will execute successfully on the Tropo Scripting Cloud platform.
 
 
 ## Quick start
 
 The emulator has been tested against the [Tropo Javascript samples](https://github.com/tropo/tropo-samples),
-extended with [SMS samples](https://github.com/ObjectIsAdvantag/tropo-samples).
+extended with [Outbound samples](https://github.com/ObjectIsAdvantag/tropo-samples).
+Note that this repo embedds the set of scripts samples in the tests/ folder.
 
 ```shell
 > npm install -g tropo-emulator-js
@@ -31,7 +32,7 @@ ALL GOOD !!!
 
 ## How to test for Inbound/Outbound Tropo calls for Voice or SMS
 
-The tropocheck command emulates an Inbound Call by default.
+The tropoready command emulates an Inbound Call by default.
 
 For examples of Outbound and SMS calls, read through or [check the Makefile](tests/Makefile) located in the tests folder
 
