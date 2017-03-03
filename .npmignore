@@ -1,0 +1,11 @@
+# IDE
+.vscode
+
+# Build artefacts 
+build
+node_modules/
+*.log
+
+# Library documentation & tests
+tests/
+docs/

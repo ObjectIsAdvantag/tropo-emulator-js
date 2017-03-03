@@ -1,0 +1,9 @@
+# IDE
+.vscode
+
+# Node artefacts
+node_modules
+*.log
+
+# Local directory
+work

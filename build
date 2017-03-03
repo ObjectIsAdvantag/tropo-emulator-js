@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo "This script builds the tropoready command..."
+
+rm -rf bin
+mkdir bin
+echo "#!/usr/bin/env node" >> bin/emulator
+cat lib/emulator.js >> bin/emulator
+
+echo "All done: tropocheck script created!"
+echo "checking bin directory:"
+ls bin/

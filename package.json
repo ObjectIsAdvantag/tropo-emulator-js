@@ -1,0 +1,20 @@
+{
+  "name": "tropo-emulator_js",
+  "version": "0.1.0",
+  "description": "Emulator for Tropo JS scripts",
+  "bin": {
+    "tropoready": "bin/emulator"
+  },
+  "dependencies": {
+    "command-line-args": "^4.0.1"
+  },
+  "scripts": {
+    "test": "node lib/emulator.js samples/basic-attendant.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ObjectIsAdvantag/tropo-emulator-js.git"
+  },
+  "author": "Stève Sfartz <stsfartz@cisco.com>",
+  "license": "MIT"
+}
