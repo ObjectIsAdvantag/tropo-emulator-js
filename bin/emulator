@@ -17,7 +17,8 @@ var optionDefinitions = [
     { name: 'parameters', alias: 'p', type: String, multiple: true },   // pass parameters, example: "phonenumber=+33678007800" 
     { name: 'checkOptions', type: Boolean },                            // if true, checks if "Choice Options"" patterns used in the script are well-formed
     { name: 'help', alias: 'h', type: Boolean },                        // shows help
-    { name: 'version', alias: 'v', type: Boolean }                      // shows help
+    { name: 'version', alias: 'v', type: Boolean },                     // shows version
+    { name: 'trequest', alias: 't', type: Boolean }                     // dumps the Tropo request library
 ];
 
 var args;
@@ -33,7 +34,7 @@ catch (err) {
 }
 
 if (args.version) {
-    console.log("v0.1.1");
+    console.log("v0.2.0");
     process.exit(0);
 }
 
@@ -53,10 +54,20 @@ function help() {
     console.log("   -p, --parameters              : injects variables parameters, example: -p 'phonenumber=+33678007800'");
     console.log("   -s, --SMS                     : marks the call as a text channel, whether inbound or outbound");
     console.log("   [--script] filename.js        : specify the script to start. Note that the '--script' mention is optional");
+    console.log("   -t,--trequest                 : dumps the HTTP client library to inject on top of your Tropo script");
     console.log("   -v,--version                  : shows version");
 }
 if (args.help) {
     help();   
+    process.exit(0);
+}
+if (args.trequest) {
+    /* TODO: turn to the possibility to load file into a string
+    var fs = require('fs');
+    var contents = fs.readFileSync('../lib/trequest.js', 'utf8');
+    */
+    var contents = tropo_request.toString();
+    console.log(contents);
     process.exit(0);
 }
 
@@ -86,7 +97,6 @@ else { // outbound call
 }
 
 var CHECK_CHOICES_PATTERN = args.checkOptions;
-
 
 
 //
@@ -320,10 +330,53 @@ function record(message, options) {
 }
 
 
+//
+// Extra libs
+//
+
+var request = require('request');
+function trequest(options, cb) {
+
+    // Wraps the request function to handle Tropo specifics (error messages...)
+    request(options, function (err, response, body) {
+        if (err) {
+            if (err.message === "ESOCKETTIMEDOUT") { // Connect timeout
+                err.message = "java.net.SocketTimeoutException: Connect timed out";
+            }
+            if (err.message === "ETIMEDOUT") { // Read timeout
+                err.message = "java.net.SocketTimeoutException: Read timed out";
+            }
+            if (err.message.match(/^getaddrinfo ENOTFOUND/)) { // No connectivity 
+                // TODO: identify Tropo behavior if server cannot be reached ?
+                err.message = "java.net.SocketTimeoutException: Connect timed out";
+            }
+            if (cb) cb(err, null, null);
+            return;
+        }
+
+        cb(null, response, body);
+    });
+}
+
+
 
 // 
 // Main: loads the specified script
 //
+
+process.on('exit', code => {
+    console.log("[      ALL DONE  ] simulation completed");
+    process.exit(code);
+});
+process.on('SIGINT', () => {
+    console.log("[      CTRL+C    ] simulation interrupted");
+    process.exit(0);
+});
+process.on('uncaughtException', err => {
+    console.log("[      EXCEPTION ] uncaught exception err: " + err.message);
+    process.exit(1);
+});
+
 try {
     var script = args.script;
     if (!script) {
@@ -333,7 +386,7 @@ try {
     }
     if (script.match(/emulator\.js/)) {
         console.log("cannot run against myself! please run command with a Tropo script.");
-        process.exit(1);        
+        process.exit(1);
     }
 
     global.answer = answer;
@@ -348,11 +401,10 @@ try {
     global.say = say;
     global.transfer = transfer;
     global.wait = wait;
+    global.trequest = trequest;
 
     var basedir = process.cwd();
     require(basedir + "/" + script);
-    console.log("ALL GOOD !!!");
-    process.exit(0);
 }
 catch (err) {
     if (err.code === "MODULE_NOT_FOUND") {

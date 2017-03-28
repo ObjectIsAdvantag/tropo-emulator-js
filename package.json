@@ -1,12 +1,13 @@
 {
   "name": "tropo-emulator-js",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Tropo Emulator for JS scripts",
   "bin": {
     "tropoready": "bin/emulator"
   },
   "dependencies": {
-    "command-line-args": "^4.0.1"
+    "command-line-args": "^4.0.1",
+    "request": "^2.81.0"
   },
   "scripts": {
     "test": "node lib/emulator.js samples/basic-attendant.js"
