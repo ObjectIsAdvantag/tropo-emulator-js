@@ -5,29 +5,30 @@ The emulator helps you check your JS scripts will execute successfully on the Tr
 
 ## Quick start
 
-The emulator has been tested against the [Tropo Javascript samples](https://github.com/tropo/tropo-samples),
-extended with [Outbound samples](https://github.com/ObjectIsAdvantag/tropo-samples).
-Note that this repo embedds the set of scripts samples in the tests/ folder.
+The emulator has been tested with the full set of [Tropo Ready samples](https://github.com/ObjectIsAdvantag/tropo-ready-vscode/tree/master/samples), 
+but let's run it with the local samples for now:
 
 ```shell
 > npm install -g tropo-emulator-js
-> git clone https://github.com/ObjectIsAdvantag/tropo-samples
-> cd tropo-samples
-> tropoready javascript/tutorial/02-askforinput.js
+> git clone https://github.com/ObjectIsAdvantag/tropo-ready-vscode
+> cd tropo-ready-vscode
+> cd samples
+> tropoready 02-askforinput.js
 [Tropo answers   ] ...
 [Tropo asks      ] Hi. For sales, press 1. For support, press 2.
 [User  chooses   ] ... choice: 1
 [Tropo says      ] sales is not available right now.
 [Tropo hangs up  ] ...
-ALL GOOD !!!
+[      ALL DONE  ] simulation completed
 ```
 
-If you already have a Tropo script at hand, simply go with
+If you already have a Tropo Voice Inbound script at hand, simply go with the commands below:
+
 ```shell
 > npm install -g tropo-emulator-js
 > tropoready <your-tropo-script.js>
 ...
-ALL GOOD !!!
+[      ALL DONE  ] simulation completed
 ```
 
 ## How to test for Inbound/Outbound Tropo calls for Voice or SMS
@@ -88,14 +89,14 @@ You can specify a callerID with the --callerID option
 > cd tropo-samples
 > tropoready javascript/tutorial/13-callerid-reject.js
 [Tropo rejects   ] ...
-ALL GOOD !!!
+[      ALL DONE  ] simulation completed
+
 > tropoready javascript/tutorial/13-callerid-reject.js --callerID "4075551111"
 [Tropo answers   ] ...
 [Tropo says      ] Hello world!
 [Tropo hangs up  ] ...
-ALL GOOD !!!
+[      ALL DONE  ] simulation completed
 ```
-
 
 ### SMS calls
 
@@ -110,12 +111,54 @@ Add the -s or --SMS option to start a test with a Tropo SMS Call (whether inboun
 > tropoready samples/bidirectional-sms.js --SMS --outbound --parameters "toNumber=+33678007800"
 [Tropo calls     ] +33678007800
 [Tropo says      ] what about coffee ? (yes/no)
-ALL GOOD !!!
+[      ALL DONE  ] simulation completed
 
 # Example with an SMS Inbound Call 
 > tropoready samples/bidirectional-sms.js --SMS --initialText "yes"
 [Tropo says      ] go get some !
-ALL GOOD !!!
+[      ALL DONE  ] simulation completed
 ```
+
+## HTTP client API calls
+
+Then comes the time where you want to invoke external APIs from your Tropo script.
+
+As the Tropo Cloud platform runs your JS script on Rhino, you've not choice but to use the java.net bindings.
+
+To make it more JS-friendly, this project proposes an HTTP client library inspired from the popular nodejs request.
+Please meet [trequest](lib/trequest.js) for Tropo Request.
+
+Here's a sample leveraging the trequest library to speak the number of stars of a Github project
+```shell
+> tropoready samples/speak-my-github-stars.js
+[Tropo answers   ] ...
+[Tropo waits     ] ... for 1000 milliseconds
+[Tropo says      ] Welcome to Github Stars !
+[Tropo waits     ] ... for 1000 milliseconds
+[Tropo says      ] Asking GitHub...
+[      LOG       ] fetched 8 star(s)
+[Tropo says      ] Congrats, project has 8 stars says Github
+[      ALL DONE  ] simulation completed
+```
+
+This other example takes an incoming Github account and project name, and responds its stars.
+```shell
+> tropoready samples/text-my-github-starts.js --SMS --initialText "CiscoDevNet awesome-ciscospark"
+[      LOG       ] fetching GitHub starts for: CiscoDevNet/awesome-ciscospark
+[      LOG       ] fetched 34 star(s)
+[Tropo says      ] Congrats, project has 34 stars on Github
+[      ALL DONE  ] simulation completed
+```
+
+To use the trequest library simply add it to your Tropo script.
+Note that the tropoready command embedds the version of the library it mimics:
+
+```shell
+> tropoready --trequest > my-script.js
+> cat my-script.js
+```
+
+
+
 
 

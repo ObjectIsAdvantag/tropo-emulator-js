@@ -33,8 +33,9 @@ catch (err) {
     }
 }
 
+var version = "v0.2.1"
 if (args.version) {
-    console.log("v0.2.0");
+    console.log(version);
     process.exit(0);
 }
 
@@ -64,6 +65,7 @@ if (args.help) {
 if (args.trequest) {
     var trequest = require("../lib/trequest.js");
     console.log(trequest.help);
+    console.log("// version: " + version);
     console.log(trequest.toString());
     process.exit(0);
 }
