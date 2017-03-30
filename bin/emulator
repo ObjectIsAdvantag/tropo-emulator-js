@@ -33,7 +33,7 @@ catch (err) {
     }
 }
 
-var version = "v0.2.1"
+var version = "v0.2.2"
 if (args.version) {
     console.log(version);
     process.exit(0);
