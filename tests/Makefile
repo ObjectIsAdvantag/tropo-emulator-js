@@ -1,5 +1,8 @@
 
-tests:
+all:
+	tropo-tutorial tropo-samples tropo-request
+
+tropo-tutorial:
 	node ../lib/emulator.js tutorial/01-helloworld.js
 	node ../lib/emulator.js tutorial/02-askforinput.js
 	node ../lib/emulator.js tutorial/03-repeatquestion.js
@@ -20,6 +23,8 @@ tests:
 	node ../lib/emulator.js tutorial/17-collectmoredigits.js
 	node ../lib/emulator.js tutorial/18-playaudio.js
 	node ../lib/emulator.js tutorial/19-recordaudio.js
+
+tropo-samples:
 	node ../lib/emulator.js basic-attendant.js
 	node ../lib/emulator.js bidirectional-sms.js --SMS --outbound --parameters "toNumber=+33678007800" 
 	node ../lib/emulator.js bidirectional-sms.js --SMS --initialText "yes"
@@ -36,6 +41,13 @@ tests:
 	node ../lib/emulator.js send-sms.js --outbound --parameters "toNumber=+33678007800" "msg=hello friends"
 	#node ../lib/emulator.js transfer.js
 
+tropo-request:
+	node ../lib/emulator.js request/speak-my-github-stars.js --callerID "+336780078XX"
+	node ../lib/emulator.js request/text-my-github-stars.js --SMS --initialText "CiscoDevNet awesome-ciscospark"
 
-
+tropoready:
+	node ../lib/emulator.js -h
+	node ../lib/emulator.js -r
+	node ../lib/emulator.js -v 
+	
 

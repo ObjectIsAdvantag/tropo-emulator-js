@@ -4,7 +4,6 @@
  * for the complete license
  */
 
-
 ////////////////////////////////////////////////////////////////////////////////////
 // request: a synchronous HTTP client library for Tropo, built in the "request" style
 //
@@ -123,63 +122,63 @@ function request(method, url, options) {
 //
 ///////////////////////////////////////////////////////////////////////////////////////
 
-
 // 
-// This script speaks the current number of stars for a github project
+// This script texts the current number of stars for a github project
 //    - star/unstar the project on github and listen to the changes in real time
 //    - uses the Tropo request library to forge HTTP requests
 //
 
-answer();
-wait(1000);
+if (currentCall) {
 
-say("Welcome to Github Stars !")
-wait(1000);
-
-say("Asking GitHub...")
-
-var account = "ObjectIsAdvantag";
-var project = "tropo-ready-vscode";
-var result = request("GET", "https://api.github.com/repos/" + account + "/" + project, {
-    headers: {
-        // Github administrative rule: mandatory User-Agent header (http://developer.github.com/v3/#user-agent-required
-        'User-Agent': 'Tropo'
-    },
-    timeout: 10000,
-    onTimeout: function () {
-        log("could not contact Github, timeout");
-        say("sorry could not contact Github, try again later...");
-        hangup();
-    },
-    onError: function (err) {
-        log("could not contact Github, err: " + err.message);
-        say("sorry could not contact Github, try again later...");
-        hangup();
+    var splitted = currentCall.initialText.split(" ");
+    if (splitted.length != 2) {
+        say("Please specify a Github account and a project");
+        throw Error("terminating");
     }
-    // for test purpose, it is one or another: onReponse or result.type
-    //, onResponse: function (response) {
-    //    var info = JSON.parse(response.body);
-    //    log("fetched " + info.stargazers_count + " star(s)");
-    //    say("Congrats, project has " + info.stargazers_count + " stars, says Github.");
-    //    wait(1000);
-    //}
-});
 
-if (result.type == "response") {
-    switch (result.response.statusCode) {
-        case 200:
-            var info = JSON.parse(result.response.body);
-            log("fetched " + info.stargazers_count + " star(s)");
-            say("Congrats, your project counts " + info.stargazers_count + " stars.")
-            wait(1000);
-            break;
-        default:
-            log("github returned statusCode: " + result.response.statusCode);
-            say("Sorry, could not retreive your project stars");
-            wait(1000);
-            break;
-    }
+    var account = splitted[0];
+    var project = splitted[1];
+    log("fetching GitHub starts for: " + account + "/" + project);
+
+    request("GET", "https://api.github.com/repos/" + account + "/" + project, {
+        headers: {
+            // Github administrative rule: mandatory User-Agent header (http://developer.github.com/v3/#user-agent-required
+            'User-Agent': 'Tropo'
+        },
+        timeout: 10000,
+        onTimeout: function () {
+            log("could not contact Github, timeout");
+            say("sorry could not contact Github, try again later...");
+            hangup();
+        },
+        onError: function (err) {
+            log("could not contact Github, err: " + err.message);
+            say("sorry could not contact Github, try again later...");
+            hangup();
+        },
+        onResponse: function (response) {
+            switch (response.statusCode) {
+                case 200:
+                    var info = JSON.parse(response.body);
+                    log("fetched " + info.stargazers_count + " star(s)");
+                    say("Congrats, " + project + " counts " + info.stargazers_count + " stars on Github");
+                    break;
+
+                case 404:
+                    log("project not found");
+                    say("Sorry, Github project not found. Please check Github account and repository name");
+                    break;
+
+                default:
+                    log("wrong answer from Github, status code: " + response.statusCode);
+                    say("Sorry, could not fetch your project Github's stars. Check https://github.com/" + account + "/" + project);
+                    break;
+            }
+        }
+    });
+
 }
-
-say("Bye bye...")
-wait(500);
+else {
+    call(toNumber, { "network": "SMS" });
+    say("Reply with your Github account and project name to receive its stars, exemple: CiscoDevNet awesome-ciscospark");
+}
