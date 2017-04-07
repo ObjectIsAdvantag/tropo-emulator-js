@@ -123,12 +123,12 @@ Add the -s or --SMS option to start a test with a Tropo SMS Call (whether inboun
 
 Then comes the time where you want to invoke external APIs from your Tropo script.
 
-As the Tropo Cloud platform runs your JS script on Rhino, you've not choice but to use the java.net bindings.
+As the Tropo Cloud platform runs your JS script on Rhino, you have no choice but to use the java.net bindings.
 
 To make it more JS-friendly, this project proposes an HTTP client library inspired from the popular nodejs request.
-Please meet [trequest](lib/trequest.js) for Tropo Request.
 
-Here's a sample leveraging the trequest library to speak the number of stars of a Github project
+Here's a [Voice sample](samples/speak-my-github-stars.js) that leverages the [Tropo request](lib/request.js) library to speak the number of stars of a Github project
+
 ```shell
 > tropoready samples/speak-my-github-stars.js
 [Tropo answers   ] ...
@@ -137,24 +137,25 @@ Here's a sample leveraging the trequest library to speak the number of stars of 
 [Tropo waits     ] ... for 1000 milliseconds
 [Tropo says      ] Asking GitHub...
 [      LOG       ] fetched 8 star(s)
-[Tropo says      ] Congrats, project has 8 stars says Github
+[Tropo says      ] Congrats, your project counts 8 stars.
 [      ALL DONE  ] simulation completed
 ```
 
-This other example takes an incoming Github account and project name, and responds its stars.
+This other [example implements a SMS machine](samples/text-my-github-starts.js), that takes an incoming Github account and project name from a SMS, and texts back the Github Project number of stars.
+
 ```shell
 > tropoready samples/text-my-github-starts.js --SMS --initialText "CiscoDevNet awesome-ciscospark"
 [      LOG       ] fetching GitHub starts for: CiscoDevNet/awesome-ciscospark
 [      LOG       ] fetched 34 star(s)
-[Tropo says      ] Congrats, project has 34 stars on Github
+[Tropo says      ] Congrats, awesome-ciscospark has 34 stars on Github
 [      ALL DONE  ] simulation completed
 ```
 
-To use the trequest library simply add it to your Tropo script.
-Note that the tropoready command embedds the version of the library it mimics:
+Simply add the [Tropo request](lib/request.js) library on top of your Tropo JS scripts.
+Note that the tropoready command provides an helper command to get the code to add to your scripts:
 
 ```shell
-> tropoready --trequest > my-script.js
+> tropoready --request > my-script.js
 > cat my-script.js
 ```
 
