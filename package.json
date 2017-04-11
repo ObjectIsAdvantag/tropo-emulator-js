@@ -1,6 +1,6 @@
 {
   "name": "tropo-emulator-js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Tropo Emulator for JS scripts",
   "bin": {
     "tropoready": "bin/emulator"
