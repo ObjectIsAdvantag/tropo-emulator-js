@@ -33,7 +33,7 @@ catch (err) {
     }
 }
 
-var version = "v0.3.2";
+var version = "v0.3.3";
 if (args.version) {
     console.log(version);
     process.exit(0);
@@ -340,7 +340,7 @@ function request(method, url, options) {
     if (!method || !url) {
         throw Error("Invalid arguments, expecting method & url at a minimum");
     }
-    if (method !== "GET") {
+    if ((method !== "GET") && (method !== "POST") && (method !== "PUT") && (method !== "DELETE") && (method !== "PATCH")) {
         throw Error("Method " + method + " is not supported");
     }
 
@@ -349,11 +349,24 @@ function request(method, url, options) {
     // Default timeout
     var timeout = options.timeout ? options.timeout : 10000;
 
+    var headers = options.headers ? options.headers : {};
+    if (options.json) {
+        headers["Content-Type"] = "application/json"
+    }
+    var body = null;
+    if (options.body) {
+        body = options.body;
+        if (options.json) {
+            body = JSON.stringify(options.body);
+        }
+    }
+
     // Fetch contents
     var result = {};
     try {
         var res = sync_request(method, url, {
-            headers: options.headers,
+            headers: headers,
+            body: body,
             timeout: timeout
         });
 
