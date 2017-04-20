@@ -6,8 +6,8 @@
     "tropoready": "bin/emulator"
   },
   "dependencies": {
-    "command-line-args": "^4.0.1",
-    "sync-request": "^4.0.1"
+    "command-line-args": "4.0.1",
+    "sync-request": "4.0.1"
   },
   "scripts": {
     "test": "node lib/emulator.js samples/basic-attendant.js"
