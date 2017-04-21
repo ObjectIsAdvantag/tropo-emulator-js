@@ -1,26 +1,11 @@
-
-var request_help = "// request: \n\
-// a synchronous HTTP client library for Tropo, built in the 'request' style \n\
-// \n\
-// forges an HTTP request towards the specified URL \n\
-//      - method: GET, POST, PUT, DELETE or PATCH \n\
-//      - url: Http endpoint you wish to hit \n\
-//      - options lets you specify HTTP headers, timeouts... and callbacks \n\
-//            * headers: set of HTTP key/values pairs \n\
-//            * timeout: enforces Connect and Read timeouts, defaults to 10s \n\
-//            * onTimeout(): function fired if the timeout expires \n\
-//            * onError(err): function fired if an error occured \n\
-//            * onResponse(response): function fired if the request is successful, see below for the structure of the response \n\
-// \n\
-// returns a result object with properties : \n\
-//      - type: 'response', 'error' or 'timeout' \n\
-//      - response: only if the type is 'response', with object properties: \n\
-//            * statusCode: integer \n\
-//            * headers: map of key/values pairs, values are either strings or arrays depending on the header \n\
-//            * body: string \n\
-//"
+/*
+ * Copyright (c) 2017 Tropo, now part of Cisco
+ * Released under the MIT license. See the file LICENSE
+ * for the complete license
+ */
 
 
+////////////////////////////////////////////////////////////////////////////////////
 // request:
 //     a synchronous HTTP client library for Tropo, built in the "request" style
 //
@@ -152,6 +137,89 @@ function request(method, url, options) {
 //
 ///////////////////////////////////////////////////////////////////////////////////////
 
-request.help = request_help;
 
-module.exports = request;
+
+// Watch out: this is an I18N IVR in French
+// 
+// This script speaks the current number of stars for a github project
+//    - star/unstar the project on github and listen to the changes in real time
+//    - uses the request library to forge HTTP requests
+//
+// It speaks the number of stars 10 times with a 20 seconds interruption to hear people votes in real time
+//
+// As a bonus, typing 2 lets the caller change the voice from Male to Female.
+
+
+answer();
+
+wait(1000);
+var currentVoice = "Thomas";
+say("Bienvenue sur Guiteub Starze !", { voice: currentVoice });
+wait(1000);
+
+var account = "ObjectIsAdvantag";
+var project = "tropo-ready-vscode";
+
+var loops_avoider = 0;
+while (loops_avoider++ < 5) {
+    say("C'est parti, j'interroge 'Guiteub' pour le projet 'Tropo Ready V S Code'", { voice: currentVoice });
+
+    var result = request("GET", "https://api.github.com/repos/" + account + "/" + project, {
+        headers: {
+            // Github administrative rule: mandatory User-Agent header (http://developer.github.com/v3/#user-agent-required
+            'User-Agent': 'Tropo Scripting'
+        },
+        timeout: 5000,  // 5 seconds
+        onTimeout: function () {
+            log("could not contact Github, timeout");
+            say("Pas de chance, je n'arrive pas à contacter Guiteub. Re-essaye plus tard...", { voice: currentVoice });
+            hangup();
+        },
+        onError: function (err) {
+            log("could not contact Github, err: " + err.message);
+            say("Saperlipopette, je n'arrive pas à contacter Guiteub...", { voice: currentVoice });
+            hangup();
+        }
+    });
+
+    if (result.type == "response") {
+        switch (result.response.statusCode) {
+            case 200:
+                var info = JSON.parse(result.response.body);
+                log("fetched " + info.stargazers_count + " star(s)");
+                say("Félicitations, ton projet a déjà " + info.stargazers_count + " étoiles", { voice: currentVoice });
+                break;
+            default:
+                log("github returned statusCode: " + result.response.statusCode);
+                say("Désolé, je n'ai pas réussi à récupérer le nombre d'étoiles pour ton projet Guiteub...", { voice: currentVoice });
+                break;
+        }
+    }
+
+    wait(1000);
+    var result = ask("Allez, tu as 20 secondes pour voter... tape 1 lorsque tu as terminé", {
+        choices: "1, 2",
+        timeout: 20, // 20 seconds
+        voice: currentVoice,
+        onTimeout: function() {
+            say("Délai écoulé !", { voice: currentVoice });
+            wait(1000);
+        } 
+    });
+
+    if (result.name == 'choice') {
+        if (result.value == "1") { 
+            say("Merci pour ton vote.", { voice: currentVoice });
+            wait(1000);
+        }
+        if (result.value == "2") { 
+            say("Quoi ? Tu n'aimes pas ma voix !", { voice: currentVoice });
+            wait(1000);
+            currentVoice = "Audrey"
+            say("Et là ! c'est mieux ?", { voice: currentVoice });
+            wait(1000);
+        }
+    }
+}
+
+hangup();

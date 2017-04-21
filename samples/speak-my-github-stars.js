@@ -6,25 +6,27 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-// request: a synchronous HTTP client library for Tropo, built in the "request" style
+// request:
+//     a synchronous HTTP client library for Tropo, built in the "request" style
 //
-// forges an HTTP request towards the specified URL, and invokes the callback
-//
-// options lets you specify HTTP headers and a read/connect timeout
-//      - method: GET, 
-//      - url: destination
-//      - headers: set of HTTP key/values pairs
-//      - timeout: applies Connect and Read timeouts
-//      - onTimeout, onError, onResponse
+// forges an HTTP request towards the specified URL
+//      - method: GET, POST, PUT, DELETE or PATCH
+//      - url: Http endpoint you wish to hit
+//      - options lets you specify HTTP headers, timeouts... and callbacks
+//            * headers: set of HTTP key/values pairs
+//            * timeout: enforces Connect and Read timeouts, defaults to 10s
+//            * onTimeout(): function fired if the timeout  expires
+//            * onError(err): function fired if an error occured
+//            * onResponse(response): function fired if the request is successful, see below for the structure of the response
 //
 // returns a result object with properties :
 //      - type: 'response', 'error' or 'timeout'
-//      - response: only if the type is response, with properties
-//              - statusCode
-//              - headers
-//              - body
+//      - response: only if the type is 'response', with object properties:
+//            * statusCode: integer
+//            * headers: map of key/values pairs, values are either strings or arrays depending on the header
+//            * body: string
 //
-// v0.3.0
+// v0.4.0
 //
 function request(method, url, options) {
     // Tropo Emulator friendly: inject the trequest function when script is run locally
@@ -36,7 +38,7 @@ function request(method, url, options) {
     if (!method || !url) {
         throw Error("Invalid arguments, expecting method & url at a minimum");
     }
-    if (method !== "GET") {
+    if ((method !== "GET") && (method !== "POST") && (method !== "PUT") && (method !== "DELETE") && (method !== "PATCH")) {
         throw Error("Method " + method + " is not supported");
     }
 
@@ -54,69 +56,81 @@ function request(method, url, options) {
         connection.setConnectTimeout(timeout);
         connection.setReadTimeout(timeout);
 
-        if (options.headers) {
-            for (var property in options.headers) {
-                if (options.hasOwnProperty(property)) {
-                    // add header
-                    var value = options.headers[property];
-                    if (typeof value !== "string") {
-                        log("REQUEST: headers property: " + property + " does not contain a string, ignoring...");
-                    }
-                    else {
-                        connection.setRequestProperty(property, value);
-                    }
-                }
-            }
-        }
-
-        connection.setDoOutput(false);
         connection.setDoInput(true);
         connection.setRequestMethod(method);
         connection.setInstanceFollowRedirects(false);
 
-        connection.connect();
+        if (options.headers) {
+            for (var key in options.headers) {
+                if (options.headers.hasOwnProperty(key)) {
+                    // add header
+                    var value = options.headers[key];
+                    if (typeof value !== "string") {
+                        log("REQUEST: headers key: " + key + " does not contain a string, ignoring...");
+                    }
+                    else {
+                        connection.setRequestProperty(key, value);
+                    }
+                }
+            }
+        }
+        if (options.json) {
+             connection.setRequestProperty("Content-Type", "application/json");
+        }
+        
+        if (options.body) {
+            connection.setDoOutput(true);
+            var payload = options.body;
+            if (options.json) {
+                payload = JSON.stringify(options.body);
+            }
+            var bodyWriter = connection.getOutputStream();
+            org.apache.commons.io.IOUtils.write(payload, bodyWriter, "UTF-8");
+            bodyWriter.flush();
+            bodyWriter.close();
+        }
+        else {
+            connection.setDoOutput(false);
+            connection.connect();
+        }
 
         var statusCode = connection.getResponseCode();
         result.response = { statusCode: statusCode };
 
+        // Read response if exists
+        var contents;
         if ((statusCode >= 200) && (statusCode < 300)) {
             var bodyReader = connection.getInputStream();
-
-            // [WORKAROUND] We cannot use a byte[], not supported on Tropo
-            // var myContents= new byte[1024*1024];
-            // bodyReader.readFully(myContents);
-            contents = new String(org.apache.commons.io.IOUtils.toString(bodyReader));
+            contents = new String(org.apache.commons.io.IOUtils.toString(bodyReader, "UTF-8"));
         }
         else if ((statusCode >= 400) && (statusCode < 600)) {
             var bodyReader = connection.getErrorStream();
-
-            // [WORKAROUND] We cannot use a byte[], not supported on Tropo
-            // var myContents= new byte[1024*1024];
-            // bodyReader.readFully(myContents);
-            contents = new String(org.apache.commons.io.IOUtils.toString(bodyReader));
+            if (bodyReader) {
+                contents = new String(org.apache.commons.io.IOUtils.toString(bodyReader, "UTF-8"));
+            }
         }
-        else {
-            // No contents
-            contents = null;
-        }
-
-        // Return response
         result.response.body = contents;
+        
+        // Invoke response callback
         if (options.onResponse) {
             options.onResponse(result.response);
         }
 
+        // Return response
         result.type = "response";
         return result;
     }
-    catch (err1) {
-        log("REQUEST: could not reach url, err: " + err1.message);
+    catch (err) {
+        log("REQUEST: could not reach url, err: " + err.message);
+
+        // Invoke error callback
         if (options.onError) {
-            options.onError(err1);
+            options.onError(err);
         }
 
+        // Return response
         result.type = "error";
-        result.error = err1;
+        result.error = err;
         return result;
     }
 }
@@ -127,42 +141,35 @@ function request(method, url, options) {
 // 
 // This script speaks the current number of stars for a github project
 //    - star/unstar the project on github and listen to the changes in real time
-//    - uses the Tropo request library to forge HTTP requests
+//    - uses the trequest library to forge HTTP requests
 //
 
 answer();
 wait(1000);
 
-say("Welcome to Github Stars !")
+say("Welcome to Guithub Stars !"); // [WORKAROUND] Changed to Guithub to enhance pronounciation
 wait(1000);
 
-say("Asking GitHub...")
+say("Asking GuitHub...");
 
 var account = "ObjectIsAdvantag";
 var project = "tropo-ready-vscode";
 var result = request("GET", "https://api.github.com/repos/" + account + "/" + project, {
     headers: {
         // Github administrative rule: mandatory User-Agent header (http://developer.github.com/v3/#user-agent-required
-        'User-Agent': 'Tropo'
+        'User-Agent': 'Tropo Scripting'
     },
     timeout: 10000,
     onTimeout: function () {
         log("could not contact Github, timeout");
-        say("sorry could not contact Github, try again later...");
+        say("sorry could not contact Guithub, try again later...");
         hangup();
     },
     onError: function (err) {
         log("could not contact Github, err: " + err.message);
-        say("sorry could not contact Github, try again later...");
+        say("sorry could not contact Guithub, try again later...");
         hangup();
     }
-    // for test purpose, it is one or another: onReponse or result.type
-    //, onResponse: function (response) {
-    //    var info = JSON.parse(response.body);
-    //    log("fetched " + info.stargazers_count + " star(s)");
-    //    say("Congrats, project has " + info.stargazers_count + " stars, says Github.");
-    //    wait(1000);
-    //}
 });
 
 if (result.type == "response") {

@@ -1,26 +1,6 @@
 
-var request_help = "// request: \n\
-// a synchronous HTTP client library for Tropo, built in the 'request' style \n\
-// \n\
-// forges an HTTP request towards the specified URL \n\
-//      - method: GET, POST, PUT, DELETE or PATCH \n\
-//      - url: Http endpoint you wish to hit \n\
-//      - options lets you specify HTTP headers, timeouts... and callbacks \n\
-//            * headers: set of HTTP key/values pairs \n\
-//            * timeout: enforces Connect and Read timeouts, defaults to 10s \n\
-//            * onTimeout(): function fired if the timeout expires \n\
-//            * onError(err): function fired if an error occured \n\
-//            * onResponse(response): function fired if the request is successful, see below for the structure of the response \n\
-// \n\
-// returns a result object with properties : \n\
-//      - type: 'response', 'error' or 'timeout' \n\
-//      - response: only if the type is 'response', with object properties: \n\
-//            * statusCode: integer \n\
-//            * headers: map of key/values pairs, values are either strings or arrays depending on the header \n\
-//            * body: string \n\
-//"
 
-
+////////////////////////////////////////////////////////////////////////////////////
 // request:
 //     a synchronous HTTP client library for Tropo, built in the "request" style
 //
@@ -152,6 +132,127 @@ function request(method, url, options) {
 //
 ///////////////////////////////////////////////////////////////////////////////////////
 
-request.help = request_help;
 
-module.exports = request;
+//
+// Cisco Spark ChatOps
+//
+function ChatOps(token, roomId, timeout) {
+    if (!token || !roomId) {
+        log("CHATOPS: bad arguments, will not log");     
+    }
+    else {
+        this.token = token;
+        this.roomId = roomId;
+    }
+
+    // Defaults to 10s
+    if (!timeout) {
+        this.timeout = 10000;
+    }
+    else {
+        this.timeout = timeout;
+    }
+}
+
+// Logs a message to a Cisco Spark room in markdown by default
+//    - isText: boolean to push your message as raw text
+ChatOps.prototype.log = function(msg, isText) {
+    if (!this.token || !this.roomId || !msg) {
+        return;
+    }
+
+    var payload = { roomId: this.roomId };
+    if (isText) {
+        payload.text = msg;
+    }
+    else {
+        payload.markdown = msg;
+    }
+
+    var result = request("POST", "https://api.ciscospark.com/v1/messages", {
+        headers: {
+            "Authorization" : "Bearer " + this.token
+        },
+        json: true,
+        body: payload,
+        timeout: this.timeout,
+        onTimeout: function () {
+            log("CHATOPS: could not contact CiscoSpark, timeout");
+        },
+        onError: function (err) {
+            log("CHATOPS: could not contact CiscoSpark, err: " + err.message);
+        },
+        onResponse: function (response) {
+            if (response.statusCode != 200) {
+                log("CHATOPS: could not log to CiscoSpark, statusCode: " + response.statusCode);
+                if (response.body) {
+                    log("CHATOPS: could not log to CiscoSpark, payload: " + response.body);
+                }
+            }
+        }
+    });
+}
+
+
+// 
+// This script lets people vote live at a conference
+// Each vote populates a Cisco Spark Room
+// As a bonus, typing 3 lets the caller change the voice from Male to Female.
+//
+
+
+// Here are some guidelines to do ChatOps for Tropo Inbound calls
+//   - Create a bot account and paste its access token 
+var sparkToken = "CISCO_SPARK_API_ACCESS_TOKEN";
+//   - Create a room, and paste the room id here
+var sparkRoom = "ROOM_IDENTIFIER";
+
+// and don't forget to add the bot to the roomId
+var chatops = new ChatOps(sparkToken, sparkRoom);
+
+function anonymize(callerID) {
+    if ((!callerID) || (callerID.length < 8)) {
+        return "unknown";
+    }
+    return callerID.substring(4, 8);
+}
+
+
+currentVoice = "Thomas";
+say("Bienvenue au Breizhcamp, la conférence carrément à l'Ouest", { voice: currentVoice });
+
+var voted = false;
+var loops_avoider = 0;
+while ((!voted) && (loops_avoider < 5)) {
+
+    var result = ask("Si c'est ta première participation, tape 1. Si tu viens tous les ans, tape 2. Pour changer de voix, tape 3.", {
+        choices: "1, 2, 3",
+        mode: "dtmf", // dtmf, speech or any
+        timeout: 20,
+        voice: currentVoice
+    });
+
+    if (result.name == 'choice') {
+        if (result.value == "1") { 
+            voted = true;
+            chatops.log("Première fois pour " + anonymize(currentCall.callerID));    
+            say("Nous sommes très heureux de t'accueillir parmi nous !", { voice: currentVoice }) ;
+        }
+        if (result.value == "2") { 
+            voted = true;
+            chatops.log("Tous les ans, pour " + anonymize(currentCall.callerID));   
+            say("Quelle fidélité ! Nous sommes fiers de te retrouver à nouveau cette année.", { voice: currentVoice });
+        }
+        if (result.value == "3") {
+            say("Quoi! tu n'aimes pas ma voix ?", { voice: currentVoice });
+            wait(1000);
+            currentVoice = "Audrey";
+            say("Et là, c'est mieux ?", { voice: currentVoice });
+            wait(500);
+        }
+    }
+
+    loops_avoider++;
+}
+
+say("Merci et à l'année prochaine...",  { voice: currentVoice });

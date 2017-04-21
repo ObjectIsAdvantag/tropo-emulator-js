@@ -33,7 +33,7 @@ catch (err) {
     }
 }
 
-var version = "v0.3.3";
+var version = "v0.4.0";
 if (args.version) {
     console.log(version);
     process.exit(0);
@@ -334,7 +334,6 @@ function record(message, options) {
 //
 
 var sync_request = require('sync-request');
-
 function request(method, url, options) {
 
     if (!method || !url) {
@@ -351,7 +350,7 @@ function request(method, url, options) {
 
     var headers = options.headers ? options.headers : {};
     if (options.json) {
-        headers["Content-Type"] = "application/json"
+        headers["Content-Type"] = "application/json; charset=utf-8"
     }
     var body = null;
     if (options.body) {
@@ -373,6 +372,8 @@ function request(method, url, options) {
         // Time to return
         result.type = "response";
         result.response = res;
+        result.response.body = res.body.toString();
+
         if (options.onResponse) {
             options.onResponse(result.response);
         }
