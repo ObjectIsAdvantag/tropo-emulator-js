@@ -58,6 +58,7 @@ Supported options:
    --initialText                 : set the specified initial text. Ignored if the call is not on a SMS channel
    -o, --outbound                : starts the script in the context of an outbound call
    -p, --parameters              : injects variables parameters, example: -p 'phonenumber=+33678007800'
+   -r, --request                 : dumps the HTTP client library. Paste it on top of your Tropo script
    -s, --SMS                     : marks the call as a text channel, whether inbound or outbound
    [--script] filename.js        : specify the script to start. Note that the '--script' mention is optional
    -v,--version                  : shows version
@@ -141,7 +142,7 @@ Here's a [Voice sample](samples/speak-my-github-stars.js) that leverages the [Tr
 [      ALL DONE  ] simulation completed
 ```
 
-This other [example implements a SMS machine](samples/text-my-github-starts.js), that takes an incoming Github account and project name from a SMS, and texts back the Github Project number of stars.
+This other [example implements a SMS machine](samples/text-my-github-stars.js), that takes an incoming Github account and project name from a SMS, and texts back the Github Project number of stars.
 
 ```shell
 > tropoready samples/text-my-github-starts.js --SMS --initialText "CiscoDevNet awesome-ciscospark"

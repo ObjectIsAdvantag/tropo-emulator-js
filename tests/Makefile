@@ -1,6 +1,5 @@
 
-all:
-	tropo-tutorial tropo-samples tropo-request
+all: tropo-tutorial tropo-samples tropo-request
 
 tropo-tutorial:
 	node ../lib/emulator.js tutorial/01-helloworld.js
